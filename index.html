@@ -13,6 +13,8 @@
 <link rel="icon" type="image/png" href="icon-192.png">
 <title>Surplus</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="https://apis.google.com/js/api.js" async defer></script>
 <style>
 :root {
   --accent: #4caf7c;
@@ -58,7 +60,7 @@ body { font-family:var(--font); background:var(--bg); color:var(--text); line-he
 .nav-btn.active { color:var(--accent); }
 .nav-btn.active .ni { transform:scale(1.15); }
 .nav-btn.active::after { content:''; position:absolute; top:0; left:50%; transform:translateX(-50%); width:24px; height:3px; border-radius:0 0 3px 3px; background:var(--accent); }
-.fab { position:fixed; bottom: 75px; right:16px; z-index:99; width:54px; height:54px; border-radius:16px; background:var(--accent); color:#fff; border:none; font-size:30px; font-weight:300; display:flex; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 4px 16px rgba(76,175,124,0.35); transition:transform 0.2s var(--ease-bounce),box-shadow 0.2s; }
+.fab { position:fixed; bottom:75px; right:16px; z-index:99; width:54px; height:54px; border-radius:16px; background:var(--accent); color:#fff; border:none; font-size:30px; font-weight:300; display:flex; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 4px 16px rgba(76,175,124,0.35); transition:transform 0.2s var(--ease-bounce),box-shadow 0.2s; }
 .fab:active { transform:scale(0.88); }
 .card { background:var(--bg2); border-radius:var(--radius); margin:0 16px 10px; padding:14px 16px; box-shadow:var(--shadow-card); }
 .home-header { padding:16px 20px 4px; display:flex; align-items:center; justify-content:space-between; }
@@ -227,6 +229,34 @@ body { font-family:var(--font); background:var(--bg); color:var(--text); line-he
 
 <div class="page" id="pg-more">
   <div style="padding:16px 20px 4px;font-size:26px;font-weight:900;">More</div>
+  <div class="section-title">Google Drive Sync</div>
+  <div class="card" id="gdriveCard">
+    <div id="gdriveSignedOut">
+      <div style="text-align:center;padding:8px 0;">
+        <p style="font-size:13px;color:var(--text2);margin-bottom:12px;font-weight:600;">Sign in to backup & sync your data across devices</p>
+        <button class="btn-p" style="max-width:280px;margin:0 auto;display:flex;align-items:center;justify-content:center;gap:8px;" onclick="gdriveSignIn()">
+          <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#34A853" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#FBBC05" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+          Sign in with Google
+        </button>
+      </div>
+    </div>
+    <div id="gdriveSignedIn" style="display:none;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
+        <img id="gdriveAvatar" src="" style="width:36px;height:36px;border-radius:50%;object-fit:cover;" onerror="this.style.display='none'">
+        <div style="flex:1;">
+          <div style="font-size:14px;font-weight:800;" id="gdriveName"></div>
+          <div style="font-size:11px;color:var(--text3);" id="gdriveEmail"></div>
+        </div>
+      </div>
+      <div style="font-size:12px;color:var(--text3);margin-bottom:8px;" id="gdriveSyncStatus">Not synced yet</div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn-o" style="flex:1;" onclick="gdriveBackup()">☁️ Backup Now</button>
+        <button class="btn-o" style="flex:1;" onclick="gdriveRestore()">📥 Restore</button>
+      </div>
+      <button style="width:100%;margin-top:8px;padding:8px;background:none;border:none;color:var(--expense);font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);" onclick="gdriveSignOut()">Sign Out</button>
+    </div>
+  </div>
+
   <div class="section-title">Analytics</div>
   <div class="pills">
     <button class="pill active" onclick="setStatP('month',this)">This Month</button>
@@ -531,7 +561,7 @@ function renderMore(){$('currLabel').textContent=`${D.cur.code} (${D.cur.symbol}
 // IMPORT/EXPORT
 function exportCSV(){const rows=[['Date','Title','Amount','Type','Category','Account','Note']];D.tx.forEach(t=>rows.push([t.date,t.title,Math.abs(t.amount),t.type,cat(t.categoryId).name,acct(t.accountId).name,t.note||'']));dl('surplus_export.csv',rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n'),'text/csv');}
 function importCSV(ev){const f=ev.target.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{const lines=e.target.result.split('\n').filter(l=>l.trim());if(lines.length<2)return alert('Invalid CSV');let c=0;for(let i=1;i<lines.length;i++){const cols=lines[i].match(/("([^"]|"")*"|[^,]*)/g).map(c=>c.replace(/^"|"$/g,'').replace(/""/g,'"').trim());if(cols.length<3)continue;const amt=parseFloat(cols[2]);if(isNaN(amt))continue;const type=(cols[3]||'').toLowerCase()==='income'?'income':'expense';const cn=cols[4]||'Other';const c2=D.cats.find(c=>c.name.toLowerCase()===cn.toLowerCase());D.tx.push({id:'t'+Date.now()+'_'+Math.random().toString(36).substr(2,4),date:cols[0]||new Date().toISOString().split('T')[0],title:cols[1]||(type==='income'?'Income':'Expense'),amount:type==='expense'?-Math.abs(amt):Math.abs(amt),type,categoryId:c2?c2.id:'other',accountId:D.accts[0]?.id||'cash',note:cols[6]||'',ts:Date.now()});c++;}save();refresh();alert('Imported '+c+' transactions!');};r.readAsText(f);ev.target.value='';}
-function exportJSON(){dl('surplus_backup.json',JSON.stringify(D,null,2),'application/json');}
+function exportJSON(){dl('surplus.json',JSON.stringify(D,null,2),'application/json');}
 function importJSON(ev){const f=ev.target.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{try{const d=JSON.parse(e.target.result);if(d.tx){D=d;save();refresh();alert('Restored!');}else alert('Invalid file');}catch(e){alert('Error');}};r.readAsText(f);ev.target.value='';}
 function dl(name,content,type){const b=new Blob([content],{type});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=name;document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(u);}
 function confirmClear(){showCfm('Clear ALL data? Cannot be undone!',()=>{localStorage.removeItem('cw2');D=loadD();save();refresh();});}
@@ -541,6 +571,161 @@ function refresh(){renderHome();if(curPg==='transactions')renderTxPage();if(curP
 
 // INIT
 applyTheme();refresh();
+// ========== GOOGLE DRIVE SYNC ==========
+const GDRIVE_CLIENT_ID='529257675355-nj3q4228eleq1dci1rmg95rt4utkdurl.apps.googleusercontent.com';
+const GDRIVE_SCOPES='https://www.googleapis.com/auth/drive.appdata';
+const GDRIVE_FILE_NAME='surplus.json';
+let gTokenClient=null;
+let gAccessToken=null;
+
+function initGdrive(){
+  if(typeof google==='undefined'||!google.accounts) return setTimeout(initGdrive,500);
+  gTokenClient=google.accounts.oauth2.initTokenClient({
+    client_id:GDRIVE_CLIENT_ID,
+    scope:GDRIVE_SCOPES,
+    callback:onGdriveToken,
+  });
+  // Check if we have a saved session
+  const saved=localStorage.getItem('cw2_guser');
+  if(saved){
+    try{const u=JSON.parse(saved);showGdriveUser(u);}catch(e){}
+  }
+}
+
+function gdriveSignIn(){
+  if(!gTokenClient) return alert('Google API not loaded yet. Please wait a moment and try again.');
+  gTokenClient.requestAccessToken({prompt:'consent'});
+}
+
+function onGdriveToken(resp){
+  if(resp.error) return console.error('GDrive auth error',resp);
+  gAccessToken=resp.access_token;
+  // Fetch user info
+  fetch('https://www.googleapis.com/oauth2/v3/userinfo',{headers:{Authorization:'Bearer '+gAccessToken}})
+    .then(r=>r.json())
+    .then(info=>{
+      const user={name:info.name||info.email,email:info.email,picture:info.picture||''};
+      localStorage.setItem('cw2_guser',JSON.stringify(user));
+      showGdriveUser(user);
+      // Auto backup on sign in
+      gdriveBackup();
+    })
+    .catch(e=>console.error('User info error',e));
+}
+
+function showGdriveUser(user){
+  $('gdriveSignedOut').style.display='none';
+  $('gdriveSignedIn').style.display='block';
+  $('gdriveName').textContent=user.name;
+  $('gdriveEmail').textContent=user.email;
+  const av=$('gdriveAvatar');
+  if(user.picture){av.src=user.picture;av.style.display='block';}
+  else av.style.display='none';
+  // Update name on home
+  if(user.name&&!D.userName){D.userName=user.name.split(' ')[0];save();$('homeName').textContent=D.userName;}
+}
+
+function gdriveSignOut(){
+  if(gAccessToken) google.accounts.oauth2.revoke(gAccessToken);
+  gAccessToken=null;
+  localStorage.removeItem('cw2_guser');
+  $('gdriveSignedOut').style.display='block';
+  $('gdriveSignedIn').style.display='none';
+  $('gdriveSyncStatus').textContent='Not synced yet';
+}
+
+function ensureGdriveToken(){
+  return new Promise((resolve,reject)=>{
+    if(gAccessToken){resolve(gAccessToken);return;}
+    if(!gTokenClient){reject('API not loaded');return;}
+    const origCb=gTokenClient.callback;
+    gTokenClient.callback=(resp)=>{
+      gTokenClient.callback=onGdriveToken;
+      if(resp.error) reject(resp.error);
+      else{gAccessToken=resp.access_token;onGdriveToken(resp);resolve(gAccessToken);}
+    };
+    gTokenClient.requestAccessToken({prompt:''});
+  });
+}
+
+async function gdriveFindFile(){
+  const token=await ensureGdriveToken();
+  const resp=await fetch('https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&q=name%3D%27'+GDRIVE_FILE_NAME+'%27&fields=files(id,name,modifiedTime)',{
+    headers:{Authorization:'Bearer '+token}
+  });
+  const data=await resp.json();
+  return data.files&&data.files.length>0?data.files[0]:null;
+}
+
+async function gdriveBackup(){
+  $('gdriveSyncStatus').textContent='Backing up...';
+  try{
+    const token=await ensureGdriveToken();
+    const existing=await gdriveFindFile();
+    const content=JSON.stringify(D);
+    const metadata={name:GDRIVE_FILE_NAME,mimeType:'application/json'};
+    if(!existing) metadata.parents=['appDataFolder'];
+
+    const form=new FormData();
+    form.append('metadata',new Blob([JSON.stringify(metadata)],{type:'application/json'}));
+    form.append('file',new Blob([content],{type:'application/json'}));
+
+    const url=existing
+      ?'https://www.googleapis.com/upload/drive/v3/files/'+existing.id+'?uploadType=multipart'
+      :'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart';
+
+    const resp=await fetch(url,{
+      method:existing?'PATCH':'POST',
+      headers:{Authorization:'Bearer '+token},
+      body:form
+    });
+    if(!resp.ok) throw new Error('Upload failed: '+resp.status);
+    const now=new Date().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+    $('gdriveSyncStatus').textContent='✓ Backed up at '+now;
+  }catch(e){
+    console.error('Backup error',e);
+    $('gdriveSyncStatus').textContent='Backup failed. Try signing in again.';
+    gAccessToken=null;
+  }
+}
+
+async function gdriveRestore(){
+  $('gdriveSyncStatus').textContent='Restoring...';
+  try{
+    const token=await ensureGdriveToken();
+    const file=await gdriveFindFile();
+    if(!file){$('gdriveSyncStatus').textContent='No backup found on Drive.';return;}
+    const resp=await fetch('https://www.googleapis.com/drive/v3/files/'+file.id+'?alt=media',{
+      headers:{Authorization:'Bearer '+token}
+    });
+    const data=await resp.json();
+    if(!data.tx){$('gdriveSyncStatus').textContent='Invalid backup file.';return;}
+    showCfm('Replace all local data with backup from Drive?',()=>{
+      D=data;save();refresh();
+      const now=new Date().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+      $('gdriveSyncStatus').textContent='✓ Restored at '+now;
+    });
+  }catch(e){
+    console.error('Restore error',e);
+    $('gdriveSyncStatus').textContent='Restore failed. Try signing in again.';
+    gAccessToken=null;
+  }
+}
+
+// Auto-backup after saving transactions
+const _origSave=save;
+save=function(){
+  _origSave();
+  // Auto-backup to Drive if signed in (debounced)
+  if(localStorage.getItem('cw2_guser')&&gAccessToken){
+    clearTimeout(save._t);
+    save._t=setTimeout(()=>gdriveBackup(),3000);
+  }
+};
+
+// Init Google API
+setTimeout(initGdrive,1000);
+
 if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});
 </script>
 </body>
